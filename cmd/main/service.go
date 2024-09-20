@@ -2,29 +2,28 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/doktorChopper/wbtech-l0/internal/database"
-	"github.com/doktorChopper/wbtech-l0/internal/handlers"
+	"github.com/doktorChopper/wbtech-l0/internal/server"
 )
 
 func main() {
 
-    mux := http.NewServeMux()
-    mux.HandleFunc("/order/show", handlers.ShowOrder)
-   // mux.HandleFunc("/order/create", createOrder)
-
     database.InitDB()
 
-    srv := &http.Server{
-        Addr: ":8080",
-        Handler: mux,
-    }
+    go func() {
+        err := server.StartServer()
+        log.Println("Launch server on port 8080 ...")
+        if err != nil {
+            log.Fatalf("Failde to start server: %v", err)
+        }
+    } ()
 
-    log.Println("launch server on port 8080")
-    err := srv.ListenAndServe()
-    if err != nil {
-        log.Fatal(err)
-    }
+    signalCh := make(chan os.Signal, 1)
+    signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+    <-signalCh
 
 }
